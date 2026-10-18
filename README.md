@@ -10,7 +10,7 @@ The Android and Kotlin SDK for [simpledatalogs](https://simpledatalogs.com): tra
 
 ## Install
 
-The library is on Maven Central. In your app module's `build.gradle.kts`:
+Early access: 0.1.0 isn't on Maven Central yet. Until it is, run `./gradlew publishToMavenLocal` in a clone and add `mavenLocal()` to your repositories. Then, in your app module's `build.gradle.kts`:
 
 ```kotlin
 dependencies {
