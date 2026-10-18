@@ -1,0 +1,15 @@
+# Every build and test dependency, pinned to an exact version.
+[versions]
+agp = "8.13.2"
+junit = "4.13.2"
+kotlin = "2.2.21"
+mavenPublish = "0.34.0"
+
+[libraries]
+junit = { module = "junit:junit", version.ref = "junit" }
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }
