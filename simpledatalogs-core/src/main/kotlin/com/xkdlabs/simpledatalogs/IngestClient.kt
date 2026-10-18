@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 import java.util.zip.GZIPOutputStream
 
 /** One HTTP answer from ingest: the status and the Retry-After header, if any. */
@@ -33,7 +33,7 @@ public class HttpUrlConnectionTransport(
 ) : IngestTransport {
     /** Sends the POST and reads only the status line and headers. */
     override fun post(url: String, headers: Map<String, String>, body: ByteArray): IngestHttpResponse {
-        val connection = URL(url).openConnection() as HttpURLConnection
+        val connection = URI.create(url).toURL().openConnection() as HttpURLConnection
 
         try {
             // A POST with a known length, never cached and never redirected (a 3xx is retried like any failure).

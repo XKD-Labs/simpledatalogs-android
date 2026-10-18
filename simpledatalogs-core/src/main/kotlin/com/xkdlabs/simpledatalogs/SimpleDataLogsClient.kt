@@ -69,7 +69,9 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
 
     /** The single thread every outbox and pipeline change runs on. */
     private val worker: ScheduledExecutorService = ScheduledThreadPoolExecutor(1, namedDaemonThreadFactory("simpledatalogs-worker") { createdThread -> workerThread = createdThread }).apply {
+        // Cancelled and pending timers must not keep the thread alive after shutdown.
         removeOnCancelPolicy = true
+        executeExistingDelayedTasksAfterShutdownPolicy = false
     }
 
     /** The thread blocking HTTP requests run on. */

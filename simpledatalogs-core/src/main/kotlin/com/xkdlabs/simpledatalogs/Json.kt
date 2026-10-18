@@ -97,7 +97,7 @@ internal class JsonReader private constructor(private val text: String) {
     /** The index of the next unread character. */
     private var position = 0
 
-    /** Parses helpers. */
+    /** The entry points. */
     companion object {
         /** Parses one JSON document into maps, lists, strings, longs, doubles, booleans and nulls. */
         fun parse(text: String): Any? {
