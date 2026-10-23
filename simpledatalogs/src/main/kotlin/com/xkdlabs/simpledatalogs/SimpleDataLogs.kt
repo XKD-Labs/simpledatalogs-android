@@ -2,6 +2,7 @@ package com.xkdlabs.simpledatalogs
 
 import android.app.Application
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.os.Looper
 import java.io.File
 import java.util.concurrent.Executor
@@ -62,7 +63,7 @@ public object SimpleDataLogs {
                 storageDirectory = storageDirectory,
                 endpoint = endpoint,
                 userAgent = "$USER_AGENT_NAME/$SDK_VERSION",
-                batchIntervalMillis = SimpleDataLogsClient.APP_BATCH_INTERVAL_MILLIS,
+                batchIntervalMillis = appBatchIntervalMillis(isDebuggable(applicationContext)),
             )
 
             // Build the client with whatever the app set before configure.
@@ -162,6 +163,14 @@ public object SimpleDataLogs {
     public fun installReferrer(context: Context, callback: InstallReferrerCallback) {
         PlayInstallReferrer.read(context, callback)
     }
+
+    /** 5 s batches while the app is debuggable, 10 s in release. */
+    internal fun appBatchIntervalMillis(isDebuggable: Boolean): Long =
+        if (isDebuggable) SimpleDataLogsClient.APP_DEBUG_BATCH_INTERVAL_MILLIS else SimpleDataLogsClient.APP_BATCH_INTERVAL_MILLIS
+
+    // The app's own debuggable flag; a library's BuildConfig is always release.
+    private fun isDebuggable(context: Context): Boolean =
+        (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
 
     // Logs an empty key, or a secret key that belongs on servers only.
     private fun warnAboutSuspiciousKey(ingestKey: String) {

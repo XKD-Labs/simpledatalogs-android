@@ -53,8 +53,11 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
         /** The batch interval servers use: a partial batch goes out 5 s after its first event. */
         public const val SERVER_BATCH_INTERVAL_MILLIS: Long = 5_000
 
-        /** The batch interval apps use: a partial batch goes out 30 s after its first event. */
-        public const val APP_BATCH_INTERVAL_MILLIS: Long = 30_000
+        /** The batch interval release apps use: a partial batch goes out 10 s after its first event. */
+        public const val APP_BATCH_INTERVAL_MILLIS: Long = 10_000
+
+        /** The batch interval debuggable apps use, so new events show within seconds while developing. */
+        public const val APP_DEBUG_BATCH_INTERVAL_MILLIS: Long = 5_000
 
         /** How long `close()` waits for a last flush. */
         public const val DEFAULT_CLOSE_TIMEOUT_MILLIS: Long = 5_000

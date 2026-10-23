@@ -18,8 +18,8 @@ public class ClientConfiguration(
     /** The User-Agent every request carries, e.g. `simpledatalogs-kotlin/0.1.0`. */
     public val userAgent: String = "simpledatalogs-kotlin/${SimpleDataLogsClient.SDK_VERSION}",
 
-    /** Seal and send a partial batch this long after its first event (apps 30 s, servers 5 s). */
-    public val batchIntervalMillis: Long = 30_000,
+    /** Seal and send a partial batch this long after its first event (apps 10 s, or 5 s while debuggable; servers 5 s). */
+    public val batchIntervalMillis: Long = SimpleDataLogsClient.APP_BATCH_INTERVAL_MILLIS,
 
     /** Seal and send as soon as the journal holds this many events. */
     public val maxBatchEventCount: Int = 50,

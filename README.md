@@ -159,7 +159,7 @@ Give each process its own `storageDirectory`. The client's threads are daemons, 
 
 ## How it behaves
 
-- **Batching.** Events go out in batches of 50, or 30 s after the first event of a partial batch (5 s for the JVM client). Every request is under 256 KB, and bodies of 1 KB or more are gzipped.
+- **Batching.** Events go out in batches of 50, or after the first event of a partial batch has waited 10 s (5 s while the app is debuggable, and for the JVM client). Every request is under 256 KB, and bodies of 1 KB or more are gzipped.
 - **Crash-safe outbox.** Each event is appended to a journal on disk as it is tracked.
   - Batches are sealed into files and deleted only after a `202`.
   - The next launch resends anything left over, including a journal cut short by a crash.

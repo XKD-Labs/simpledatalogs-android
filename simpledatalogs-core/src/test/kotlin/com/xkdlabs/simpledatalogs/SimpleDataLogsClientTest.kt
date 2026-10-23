@@ -37,9 +37,9 @@ class SimpleDataLogsClientTest {
         client.track("lonely")
         client.settle()
         assertEquals(0, transport.requests.size)
-        assertEquals(listOf(30_000L), timers.pendingDelays())
+        assertEquals(listOf(10_000L), timers.pendingDelays())
 
-        timers.fireWithDelay(30_000)
+        timers.fireWithDelay(10_000)
         client.settle()
 
         assertEquals(1, transport.requests.size)
