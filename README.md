@@ -85,11 +85,24 @@ SimpleDataLogs.configure(this, ingestKey = "sdl_pub_…", autocapture = Autocapt
 | `setEnabled(isEnabled)` | The opt-out. `false` ignores new events and **deletes every unsent event**; `true` collects again. |
 | `flush()` | Seals and starts sending everything now, without waiting. |
 | `flushBlocking(timeoutMillis)` | Sends everything and waits; returns `true` when nothing is left to send. For background work only; on the main thread it returns `false` at once. |
+| `installReferrer(context, callback)` | Reads the Play Store install referrer once and calls back on the main thread with it, or `null`. Needs `com.android.installreferrer:installreferrer` in your app. |
 
 Property values are `String`, `Int`, `Long`, `Short`, `Byte`, `Float`, `Double` or `Boolean`. Anything else (`null`, lists, maps, objects), and NaN or infinity, is dropped with a log line.
 
 Call `setEnabled` **before** `configure`. A user who opted out then never sends a byte, and whatever an earlier launch left on disk is deleted instead of sent.
 The opt-out is not persisted by the SDK; your app's own setting is the source of truth, so pass it on every launch.
+
+## Installs from shared links
+
+Put a random share id in the Play Store link's referrer (`&referrer=share_id%3DK7F2mQ9x`). On the first launch, read it and send it on `app_installed`; SimpleDataLogs then writes the share id onto that event. Add `com.android.installreferrer:installreferrer:2.2` to your app first.
+
+```kotlin
+SimpleDataLogs.installReferrer(context) { installReferrer ->
+    SimpleDataLogs.track("app_installed", mapOf("install_referrer" to installReferrer))
+}
+```
+
+A `null` referrer is dropped from the props, so the event still counts as an install.
 
 ## Sending from WorkManager
 

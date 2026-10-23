@@ -50,6 +50,9 @@ kotlin {
 dependencies {
     api(project(":simpledatalogs-core"))
 
+    // Optional at runtime: apps add it themselves when they want the install referrer.
+    compileOnly(libs.installreferrer)
+
     testImplementation(libs.junit)
 }
 

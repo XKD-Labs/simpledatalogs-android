@@ -157,6 +157,12 @@ public object SimpleDataLogs {
         return runningClient.flushBlocking(timeoutMillis)
     }
 
+    /** Reads the Play Store install referrer for shared-link attribution and calls back on the main thread; send it as `install_referrer` on `app_installed`. Needs `com.android.installreferrer:installreferrer` in the app. */
+    @JvmStatic
+    public fun installReferrer(context: Context, callback: InstallReferrerCallback) {
+        PlayInstallReferrer.read(context, callback)
+    }
+
     // Logs an empty key, or a secret key that belongs on servers only.
     private fun warnAboutSuspiciousKey(ingestKey: String) {
         if (ingestKey.isEmpty()) {

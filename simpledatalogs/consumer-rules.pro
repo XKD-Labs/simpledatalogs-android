@@ -1,2 +1,3 @@
-# SimpleDataLogs uses no reflection, so apps need no keep rules for it.
-# This file exists so future rules reach apps automatically.
+# SimpleDataLogs uses no reflection beyond checking for Google's install referrer library.
+# Apps that never add that library must not see R8 warnings about it.
+-dontwarn com.android.installreferrer.**

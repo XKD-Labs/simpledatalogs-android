@@ -14,3 +14,4 @@ The first public release.
 - Bounded storage: at most 10,000 events, 10 MB or 500 batch files, kept out of Android Auto Backup.
 - A flush when the app goes to the background, and `flushBlocking` for WorkManager.
 - Opt-in autocapture of launches, sessions, crashes and screen views.
+- `SimpleDataLogs.installReferrer` reads the Play Store install referrer for installs from shared links, through Google's library when the app includes it.
