@@ -43,7 +43,13 @@ public object SimpleDataLogs {
     /** Starts the SDK; call once in `Application.onCreate`, after `setEnabled` if the user may have opted out. Later calls are ignored. */
     @JvmStatic
     @JvmOverloads
-    public fun configure(context: Context, ingestKey: String, endpoint: String = DEFAULT_ENDPOINT, autocapture: Autocapture = Autocapture.NONE) {
+    public fun configure(
+        context: Context,
+        ingestKey: String,
+        endpoint: String = DEFAULT_ENDPOINT,
+        autocapture: Autocapture = Autocapture.NONE,
+        activity: ActivityReporting = ActivityReporting.AUTOMATIC,
+    ) {
         // Trim copy-paste whitespace, and warn about a key that cannot work in an app.
         val trimmedIngestKey = ingestKey.trim()
         warnAboutSuspiciousKey(trimmedIngestKey)
@@ -76,8 +82,13 @@ public object SimpleDataLogs {
             val controller = startAutocapture(autocapture, storageDirectory, newClient)
             autocaptureController = controller
 
-            // Flush when the app leaves the foreground; feed sessions and screen views.
-            observeLifecycle(applicationContext, autocapture, newClient, controller)
+            // Events say whether someone was using the app; no activity has started yet in onCreate.
+            if (activity == ActivityReporting.AUTOMATIC) {
+                newClient.setAppActive(false)
+            }
+
+            // Flush when the app leaves the foreground; feed sessions, screen views and app_state.
+            observeLifecycle(applicationContext, autocapture, newClient, controller, activity)
         }
     }
 
@@ -206,7 +217,13 @@ public object SimpleDataLogs {
     }
 
     // Registers the activity callbacks that flush on background and feed autocapture.
-    private fun observeLifecycle(applicationContext: Context, options: Autocapture, runningClient: SimpleDataLogsClient, controller: AutocaptureController?) {
+    private fun observeLifecycle(
+        applicationContext: Context,
+        options: Autocapture,
+        runningClient: SimpleDataLogsClient,
+        controller: AutocaptureController?,
+        activity: ActivityReporting,
+    ) {
         val application = applicationContext as? Application
         if (application == null) {
             AndroidSdkLogger.warning("configure got a context without an Application; background flushes and autocapture are off")
@@ -221,8 +238,12 @@ public object SimpleDataLogs {
         }
 
         val observer = AppLifecycleObserver(
-            onEnteredForeground = { controller?.appBecameActive(System.currentTimeMillis()) },
+            onEnteredForeground = {
+                if (activity == ActivityReporting.AUTOMATIC) runningClient.setAppActive(true)
+                controller?.appBecameActive(System.currentTimeMillis())
+            },
             onLeftForeground = {
+                if (activity == ActivityReporting.AUTOMATIC) runningClient.setAppActive(false)
                 controller?.appWentToBackground(System.currentTimeMillis())
                 runningClient.flush()
             },

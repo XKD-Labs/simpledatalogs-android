@@ -104,6 +104,15 @@ SimpleDataLogs.installReferrer(context) { installReferrer ->
 
 A `null` referrer is dropped from the props, so the event still counts as an install.
 
+## Active and background
+
+Every event tracked now says whether someone was using the app, so the Sessions tab can tell active sessions from passive ones:
+
+- `app_state` is `active` while one of your activities is started, else `background` (a worker, a service, a receiver).
+- `engaged_ms` is the time the app spent in front since the previous event.
+- Mark background work yourself with `track("sync_finished", mapOf("app_state" to "background"))`; your value wins.
+- Turn it off with `configure(..., activity = ActivityReporting.OFF)`. The plain JVM client sends neither.
+
 ## Sending from WorkManager
 
 The SDK flushes when the app goes to the background, and resends anything left on the next launch. To also deliver while the app stays closed, flush from a worker. The SDK does not depend on WorkManager; add `androidx.work:work-runtime-ktx` yourself.

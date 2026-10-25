@@ -95,6 +95,9 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
     /** Properties merged into every event's props. */
     private var defaultProperties: Map<String, Any> = emptyMap()
 
+    /** The app's foreground time between events, once the Android library reports the app's state. */
+    private var activityTracker: ActivityTracker? = null
+
     /** False after an opt-out: events are ignored and the outbox is deleted. */
     private var isEnabled = isInitiallyEnabled
 
@@ -121,7 +124,7 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
     /** Records one event; it returns at once and never throws. Properties may be strings, numbers or booleans. */
     @JvmOverloads
     public fun track(eventName: String, properties: Map<String, Any?> = emptyMap()) {
-        trackAt(eventName, properties, dependencies.clock.currentTimeMillis(), null, isSessionIdExplicit = false)
+        trackAt(eventName, properties, dependencies.clock.currentTimeMillis(), null, isSessionIdExplicit = false, isHappeningNow = true)
     }
 
     /** Records a screen view: `screen_view` with a `screen` prop. */
@@ -213,7 +216,23 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
     /** Records an event with its own time and session id, e.g. a session_end or a crash from the last launch. */
     @InternalSimpleDataLogsApi
     public fun trackAt(eventName: String, properties: Map<String, Any?>, occurredAtMillis: Long, sessionId: String?) {
-        trackAt(eventName, properties, occurredAtMillis, sessionId, isSessionIdExplicit = true)
+        trackAt(eventName, properties, occurredAtMillis, sessionId, isSessionIdExplicit = true, isHappeningNow = false)
+    }
+
+    /** The app came to the front or left it; the first call turns on `app_state` and `engaged_ms` for events tracked now. */
+    @InternalSimpleDataLogsApi
+    public fun setAppActive(isActive: Boolean) {
+        val nowMillis = dependencies.clock.currentTimeMillis()
+
+        synchronized(stateLock) {
+            val runningTracker = activityTracker
+
+            if (runningTracker == null) {
+                activityTracker = ActivityTracker(isActive, nowMillis)
+            } else {
+                runningTracker.setActive(isActive, nowMillis)
+            }
+        }
     }
 
     /** Sets the session id on every later event; autocapture's sessions call it. */
@@ -260,8 +279,8 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
 
     // Private helpers
 
-    // Stamps and queues one event, keeping call order, within the pending-track cap.
-    private fun trackAt(eventName: String, properties: Map<String, Any?>, occurredAtMillis: Long, explicitSessionId: String?, isSessionIdExplicit: Boolean) {
+    // Stamps and queues one event, keeping call order, within the pending-track cap; one happening now also says whether the app was in use.
+    private fun trackAt(eventName: String, properties: Map<String, Any?>, occurredAtMillis: Long, explicitSessionId: String?, isSessionIdExplicit: Boolean, isHappeningNow: Boolean) {
         // An empty name cannot become an event.
         if (eventName.isEmpty()) {
             logger.error("track was called with an empty event name; event dropped")
@@ -298,7 +317,7 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
                 occurredAtMillis = occurredAtMillis,
                 deviceId = deviceId,
                 sessionId = if (isSessionIdExplicit) explicitSessionId else sessionId,
-                properties = Properties.merge(defaultProperties, validProperties),
+                properties = Properties.merge(Properties.merge(defaultProperties, activityProperties(isHappeningNow, occurredAtMillis)), validProperties),
             )
 
             // Queue it under the lock, so events from many threads keep call order.
@@ -312,6 +331,13 @@ public class SimpleDataLogsClient @InternalSimpleDataLogsApi constructor(
                 pendingTrackCount.decrementAndGet()
             }
         }
+    }
+
+    // The app_state and engaged_ms of an event happening now; called under the state lock.
+    private fun activityProperties(isHappeningNow: Boolean, occurredAtMillis: Long): Map<String, Any> {
+        val runningTracker = activityTracker
+
+        return if (isHappeningNow && runningTracker != null) runningTracker.stamp(occurredAtMillis) else emptyMap()
     }
 
     // Runs an action on the worker; false when the worker has shut down.
