@@ -44,18 +44,24 @@ docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.28.0 git /repo -v
 
 ## Releasing
 
-Releases go to Maven Central through the Sonatype Central Portal, from `.github/workflows/publish.yml`.
+Releases go to Maven Central through the Sonatype Central Portal, published from a maintainer's machine; nothing runs on GitHub.
 
 1. Set `VERSION_NAME` in `gradle.properties` and move the `CHANGELOG.md` entry from "Unreleased" to a date.
-2. Commit, then push a tag `v<VERSION_NAME>`, e.g. `v0.1.0`. The workflow refuses a tag that does not match `VERSION_NAME`.
+2. Run the tests above, then publish with JDK 17 and the Android SDK:
 
-The workflow needs these repository secrets:
+   ```sh
+   ./gradlew publishAndReleaseToMavenCentral --no-configuration-cache
+   ```
 
-| Secret | What | Passed to Gradle as |
-|---|---|---|
-| `MAVEN_CENTRAL_USERNAME` | The user name of a Central Portal user token | `ORG_GRADLE_PROJECT_mavenCentralUsername` |
-| `MAVEN_CENTRAL_PASSWORD` | The password of that token | `ORG_GRADLE_PROJECT_mavenCentralPassword` |
-| `SIGNING_KEY` | The ASCII-armored GPG private key (`gpg --armor --export-secret-keys <key id>`) | `ORG_GRADLE_PROJECT_signingInMemoryKey` |
-| `SIGNING_KEY_PASSWORD` | The key's passphrase | `ORG_GRADLE_PROJECT_signingInMemoryKeyPassword` |
+3. Commit, tag `v<VERSION_NAME>` (e.g. `v0.1.0`) and push both.
 
-Signing keys and tokens come only from these secrets or your own `~/.gradle/gradle.properties`; never commit them. Publications are signed only when `signingInMemoryKey` is set, so local `publishToMavenLocal` works without a key.
+Gradle reads the credentials from your own `~/.gradle/gradle.properties`, never from the repo:
+
+| Property | What |
+|---|---|
+| `mavenCentralUsername` | The user name of a Central Portal user token |
+| `mavenCentralPassword` | The password of that token |
+| `signingInMemoryKey` | The ASCII-armored GPG private key (`gpg --armor --export-secret-keys <key id>`) |
+| `signingInMemoryKeyPassword` | The key's passphrase |
+
+Publications are signed only when `signingInMemoryKey` is set, so `publishToMavenLocal` works without a key.
